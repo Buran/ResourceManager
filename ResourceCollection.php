@@ -135,7 +135,9 @@ class ResourceCollection extends BaseResource implements iResourceCollection {
 	}
 
 	/**
-	 * Append resource or collection of resources
+	 * Прикрепить ресурс к аггрегатору. Ресурс может быть таким же аггрегатором или одиночным ресурсом.
+	 * Если ресурс уже прикреплен к другому аггрегатору, то возникнет ошибка, но ресурс будет переприкреплен
+	 * к новому аггрегатору.
 	 * @return
 	 * @param $resource Object
 	 */
@@ -150,7 +152,7 @@ class ResourceCollection extends BaseResource implements iResourceCollection {
 	}
 
 	/**
-	 * Detach resource or collection of resources
+	 * Открепить от коллекции ресурс, если он есть в этой коллекции. При этом открепленный ресурс продолжает жить.
 	 * @return
 	 * @param $resource Object
 	 */
