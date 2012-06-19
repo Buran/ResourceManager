@@ -3,7 +3,7 @@ class DriverJavaScript extends Driver {
 
 	private $base_uri;
 
-	public function __construct($options) {
+	public function __construct($options = array()) {
 		$this->base_uri = !empty($options['base-uri']) ? $options['base-uri'] : '';
 	}
 
