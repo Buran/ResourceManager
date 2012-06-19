@@ -48,7 +48,14 @@ class Resource extends BaseResource implements iResource {
 		return false;
 	}
 
-	public function flush() {
+	/**
+	 * Сохраняет в указанныq файл (но не флашит) ресурс, если для него указан файл. Если не указан, то не делает ничего.
+	 */
+	public function saveFile() {
+		return $this->flush(true);
+	}
+
+	public function flush($only_save_files = false) {
 		//resource is empty? -- do not do anything.
 		if ($this->data === false && $this->file_name === false) {
 			return $this;
@@ -61,13 +68,16 @@ class Resource extends BaseResource implements iResource {
 			return $this;
 		}
 		$error = false;
+		$content = false;
 		//inline flushing
 		if ($this->inline || ($this->data !== false && !$this->file)) {
-			$data = $this->getString(true);
-			if ($data !== false) {
-				$content = $driver->flushInline($data, $this->getComputedParameters());
-			} else {
-				$error = 'no data specified';
+			if (!$only_save_files) {
+				$data = $this->getString(true);
+				if ($data !== false) {
+					$content = $driver->flushInline($data, $this->getComputedParameters());
+				} else {
+					$error = 'no data specified';
+				}
 			}
 		//file flushing
 		} else {
@@ -90,19 +100,19 @@ class Resource extends BaseResource implements iResource {
 			} else {
 				$error = 'no output file name specified; file flushing aborted';
 			}
-			if ($error === false) {
+			if ($error === false && !$only_save_files) {
 				//driver can return false if e.g. file flushing is not supported (as in HTML driver)
 				$content = $driver->flushFile($file_name, $this->getComputedParameters());
 			}
 		}
 		$this->file_name = false;
 		$this->data = false;
-		if ($error === false && $content !== false) {
+		if ($error === false && $content !== false && !$only_save_files) {
 			echo implode("\n", $content);
 		} elseif ($error) {
 			trigger_error($error);
 		}
-		if ($this->collection) {
+		if (!$only_save_files && $this->collection) {
 			$this->collection->removeResource($this);
 		}
 		return $this;
@@ -111,6 +121,8 @@ class Resource extends BaseResource implements iResource {
 	protected function getFinalFileName() {
 		if (is_string($this->file)) {
 			return $this->file;
+		} elseif (is_callable($this->file)) {
+			return call_user_func($this->file, $this);
 		} elseif (!empty($this->file_name)) {
 			return $this->file_name;
 		}

@@ -1,18 +1,24 @@
 <?php
 interface iDriver {
-	public static function flushInline($data, $parameters = array());
-	public static function flushFile($file_name, $parameters = array());
+	public function flushInline($data, $parameters = array());
+	public function flushFile($file_name, $parameters = array());
 }
 abstract class Driver implements iDriver {
 
-	public static function flushInline($data, $parameters = array()) {
+	/**
+	 * TODO: Удалить из ресурсов установку атрибутов для драйверов.
+	 */
+	public function __construct($options) {
+	}
+
+	public function flushInline($data, $parameters = array()) {
 		return array(
 			$data,
 			''
 		);
 	}
 
-	public static function flushFile($file_name, $parameters = array()) {
+	public function flushFile($file_name, $parameters = array()) {
 		return array(
 			$file_name,
 			''

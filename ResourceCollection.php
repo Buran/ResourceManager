@@ -47,6 +47,11 @@ class ResourceCollection extends BaseResource implements iResourceCollection {
 		}
 	}
 
+	/**
+	 * Возвращает новый ресурс (или коллекцию, что то же самое, что и ресурс), но не текущую коллекцию.
+	 * TODO: подумать о целесообразности такой путаницы (возвращается новый ресурс).
+	 * @return Resource
+	 */
 	public function addFile() {
 		$file_names = func_get_args();
 		return $this->addResource('file', $file_names);
@@ -77,9 +82,22 @@ class ResourceCollection extends BaseResource implements iResourceCollection {
 		}
 	}
 
-	public function flush() {
+	/**
+	 * Сохраняет в указанные файлы (но не флашит) только те ресурсы, для которых указан конкретный файл для сохранения.
+	 * Почти то же самое, что и флаш, но делает только сохранение файлов. Ресурсы из коллекции после этого не удаляется,
+	 * как при флаше.
+	 */
+	public function saveFiles() {
+		$this->flush(true);
+		return $this;
+	}
+
+	public function flush($only_save_files = false) {
 		if (!count($this->resources)) {
 			return;
+		}
+		if ($only_save_files && $this->inline) {
+			return $this;
 		}
 		if ($this->file || $this->inline) {
 			$driver = $this->getDriver();
@@ -108,19 +126,23 @@ class ResourceCollection extends BaseResource implements iResourceCollection {
 					return $this;
 				}
 				file_put_contents($file_name, $data);
-				$content = $driver->flushFile($file_name, $this->getComputedParameters());
+				if (!$only_save_files) {
+					$content = $driver->flushFile($file_name, $this->getComputedParameters());
+				}
 			}
-			echo implode("\n", $content);
+			if (!$only_save_files) {
+				echo implode("\n", $content);
+			}
 		} else {
 			foreach ($this->resources as $Resource) {
-				$Resource->flush();
+				$Resource->flush($only_save_files);
 			}
 		}
 //		foreach ($this->resources as $k => $Resource) {
 //			$Resource->collection = false;
 //			unset($this->resources[$k]);
 //		}
-		if ($this->collection) {
+		if (!$only_save_files && $this->collection) {
 			$this->collection->removeResource($this);
 		}
 		return $this;
@@ -169,6 +191,8 @@ class ResourceCollection extends BaseResource implements iResourceCollection {
 	protected function getFinalFileName() {
 		if (is_string($this->file)) {
 			return $this->file;
+		} elseif (is_callable($this->file)) {
+			return call_user_func($this->file, $this);
 		}
 		return 'foobar.js';
 	}
